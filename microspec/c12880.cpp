@@ -2,6 +2,9 @@
   c12880.cpp - Library for interacting with the Hamamatsu C128880
                           microspectrometer
   Created by Craig Wm. Versek, 2017-03-01
+  
+  Much of the initial implmentation was based on this project:
+  https://github.com/groupgets/c12880ma/blob/master/arduino_c12880ma_example/arduino_c12880ma_example.ino
  */
 #include <Arduino.h>
 #include "c12880.h"
