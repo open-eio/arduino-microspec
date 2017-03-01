@@ -33,6 +33,6 @@ void SPEC_READ_sCmd_query_handler(SerialCommand this_sCmd){
     this_sCmd.print(',');
   }
   //last value gets special formatting
-  this_sCmd.print(data[C128880_NUM_CHANNELS]);
+  this_sCmd.print(data[C128880_NUM_CHANNELS - 1]);
   this_sCmd.print("\n");
 }
