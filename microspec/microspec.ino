@@ -1,3 +1,4 @@
+#include <SerialCommand.h>
 #include "c12880.h"
 
 #define SPEC_TRG         A0
@@ -8,17 +9,30 @@
 uint16_t data[C128880_NUM_CHANNELS];
 C128880_Class spec(SPEC_TRG,SPEC_ST,SPEC_CLK,SPEC_VIDEO);
 
+SerialCommand sCmd(Serial);// the SerialCommand parser object
+
 void setup(){
   Serial.begin(115200); // Baud Rate set to 115200
+  // Setup callbacks for SerialCommand commands
+  sCmd.addCommand("SPEC.READ?", SPEC_READ_sCmd_query_handler); //reads out the whole spectrum
   spec.begin();
 }
 
 void loop(){
-  spec.read_into(data);
-  for (int i = 0; i < C128880_NUM_CHANNELS; i++){
-    Serial.print(data[i]);
-    Serial.print(',');
+  int num_bytes = sCmd.readSerial();      // fill the buffer
+  if (num_bytes > 0){
+    sCmd.processCommand();  // process the command
   }
-  Serial.print("\n");
   delay(10);
+}
+
+void SPEC_READ_sCmd_query_handler(SerialCommand this_sCmd){
+  spec.read_into(data);
+  for (int i = 0; i < C128880_NUM_CHANNELS - 1; i++){
+    this_sCmd.print(data[i]);
+    this_sCmd.print(',');
+  }
+  //last value gets special formatting
+  this_sCmd.print(data[C128880_NUM_CHANNELS]);
+  this_sCmd.print("\n");
 }

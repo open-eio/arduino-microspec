@@ -43,7 +43,7 @@ void C128880_Class::read_into(uint16_t *buffer) {
       digitalWrite(_CLK_pin, HIGH);
       delayMicroseconds(delayTime);
       digitalWrite(_CLK_pin, LOW);
-      delayMicroseconds(delayTime); 
+      delayMicroseconds(delayTime);
  
   }
   
