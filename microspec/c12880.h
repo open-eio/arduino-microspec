@@ -6,6 +6,7 @@
 #define _C12880_H_INCLUDED
 
 #include <Arduino.h>
+#include <ADC.h> /* https://github.com/pedvide/ADC */
 
 #define C128880_NUM_CHANNELS 288
 /*******************************************************************************
@@ -29,6 +30,7 @@ private:
   int _ST_pin;
   int _CLK_pin;
   int _VIDEO_pin;
+  ADC *_adc; // adc object
 };
 
 

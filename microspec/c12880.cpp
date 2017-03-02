@@ -7,6 +7,7 @@
   https://github.com/groupgets/c12880ma/blob/master/arduino_c12880ma_example/arduino_c12880ma_example.ino
  */
 #include <Arduino.h>
+#include <ADC.h> /* https://github.com/pedvide/ADC */
 #include "c12880.h"
  
 C128880_Class::C128880_Class(const int TRG_pin,
@@ -18,9 +19,20 @@ C128880_Class::C128880_Class(const int TRG_pin,
   _ST_pin  = ST_pin;
   _CLK_pin = CLK_pin;
   _VIDEO_pin = VIDEO_pin;
+  _adc = new ADC(); // adc object
 }
 
 void C128880_Class::begin() {
+  ///// ADC0 ////--------------------------------------------------------------
+  //adc->setReference(ADC_REF_INTERNAL, ADC_0); For Teensy 3.x ADC_REF_INTERNAL is 1.2V, default is 3.3V
+  _adc->setAveraging(1); // set number of averages
+  _adc->setResolution(16); // set bits of resolution
+  // it can be VERY_LOW_SPEED, LOW_SPEED, MED_SPEED, HIGH_SPEED_16BITS, HIGH_SPEED or VERY_HIGH_SPEED
+  // see the documentation for more information
+  _adc->setConversionSpeed(ADC_CONVERSION_SPEED::HIGH_SPEED_16BITS); // change the conversion speed
+  // it can be VERY_LOW_SPEED, LOW_SPEED, MED_SPEED, HIGH_SPEED or VERY_HIGH_SPEED
+  _adc->setSamplingSpeed(ADC_SAMPLING_SPEED::HIGH_SPEED); // change the sampling speed
+
   //Set desired pins to OUTPUT
   pinMode(_CLK_pin, OUTPUT);
   pinMode(_ST_pin, OUTPUT);
@@ -72,7 +84,7 @@ void C128880_Class::read_into(uint16_t *buffer) {
   //Read from SPEC_VIDEO
   for(int i = 0; i < C128880_NUM_CHANNELS; i++){
 
-      buffer[i] = analogRead(_VIDEO_pin);
+      buffer[i] = _adc->analogRead(_VIDEO_pin);
       
       digitalWrite(_CLK_pin, HIGH);
       delayMicroseconds(delayTime);

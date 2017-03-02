@@ -1,18 +1,21 @@
 import glob, serial
+from pylab import *
 
 port = glob.glob("/dev/ttyACM*")[0]
 
 s = serial.Serial(port,baudrate=115200)
 
-data = None
-#readout several spec and only keep the last one
-for i in range(10):
-    s.write("SPEC.READ?\n")
-    data = s.readline()
-    print data
+def read_spec():
+    data = None
+    #the first spec will usually be saturated
+    for i in range(2):
+        s.write(b"SPEC.READ?\n")
+        data = s.readline()
+        
+    data = array([int(p) for p in data.split(b",")])
+    return data
 
-data = map(int,data.split(","))
 
-from pylab import *
+data = read_spec()
 plot(data)
-show()
+#show()

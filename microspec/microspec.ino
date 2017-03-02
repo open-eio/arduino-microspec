@@ -1,4 +1,5 @@
 #include <SerialCommand.h>   /* http://github.com/p-v-o-s/Arduino-SerialCommand */
+#include <ADC.h> /* https://github.com/pedvide/ADC */
 #include "c12880.h"
 
 #define SPEC_TRG         A0
