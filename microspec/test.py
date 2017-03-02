@@ -1,5 +1,11 @@
-import glob, serial
+import os, glob, serial
 from pylab import *
+
+
+DATASET_NAME = "fluor_overhead_10bit"
+
+mpl.rcParams["savefig.directory"] = os.path.dirname(__file__)
+
 
 port = glob.glob("/dev/ttyACM*")[0]
 
@@ -18,4 +24,6 @@ def read_spec():
 
 data = read_spec()
 plot(data)
-#show()
+title(DATASET_NAME)
+show()
+savetxt("%s.csv" % DATASET_NAME,data,delimiter=",")
