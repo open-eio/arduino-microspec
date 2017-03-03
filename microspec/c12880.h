@@ -22,15 +22,21 @@ public:
                );
   //Configuration methods
   void begin();
+  void set_integration_time(float seconds);
   //Functionality methods
   void read_into(uint16_t *buffer);
 private:
+  //helper methods
+  void _pulse_clock(int times);
   //Attributes
   int _TRG_pin;
   int _ST_pin;
   int _CLK_pin;
   int _VIDEO_pin;
   ADC *_adc; // adc object
+  int _clock_delay_micros;
+  float _integ_time;
+  int   _integ_clock_cycles;
 };
 
 

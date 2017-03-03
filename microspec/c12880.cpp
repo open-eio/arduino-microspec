@@ -19,7 +19,9 @@ C128880_Class::C128880_Class(const int TRG_pin,
   _ST_pin  = ST_pin;
   _CLK_pin = CLK_pin;
   _VIDEO_pin = VIDEO_pin;
-  _adc = new ADC(); // adc object
+  _adc = new ADC();        // adc object
+  _clock_delay_micros = 1; // half of a clock period
+  set_integration_time(0.001);  // integration time default to 1ms
 }
 
 void C128880_Class::begin() {
@@ -37,75 +39,48 @@ void C128880_Class::begin() {
   pinMode(_CLK_pin, OUTPUT);
   pinMode(_ST_pin, OUTPUT);
   
-  digitalWrite(_CLK_pin, HIGH); // Start with CLK High
-  digitalWrite(_ST_pin, LOW);   // Start with ST Low
+  digitalWrite(_CLK_pin, LOW); // Start with CLK High
+  digitalWrite(_ST_pin, LOW);  // Start with ST Low
+}
+
+void C128880_Class::set_integration_time(float seconds) {
+  _integ_time = max(seconds, 48*2*1e-6);
+  _integ_clock_cycles = (int)(1000000*_clock_delay_micros/2)*_integ_time - 48;
+  _integ_clock_cycles = max(_integ_clock_cycles,0);
+}
+
+void C128880_Class::_pulse_clock(int times){
+  for(int i = 0; i < times; i++){
+    digitalWrite(_CLK_pin, HIGH);
+    delayMicroseconds(_clock_delay_micros);
+    digitalWrite(_CLK_pin, LOW);
+    delayMicroseconds(_clock_delay_micros);
+  }
 }
 
 void C128880_Class::read_into(uint16_t *buffer) {
-  int delayTime = 1; // delay time
   // Start clock cycle and set start pulse to signal start
-  digitalWrite(_CLK_pin, LOW);
-  delayMicroseconds(delayTime);
   digitalWrite(_CLK_pin, HIGH);
-  delayMicroseconds(delayTime);
+  delayMicroseconds(_clock_delay_micros);
   digitalWrite(_CLK_pin, LOW);
   digitalWrite(_ST_pin, HIGH);
-  delayMicroseconds(delayTime);
+  delayMicroseconds(_clock_delay_micros);
+  _pulse_clock(3); //pixel integration starts after three clock pulses
   
-  //Sample for a period of time
-  for(int i = 0; i < 15; i++){
-
-      digitalWrite(_CLK_pin, HIGH);
-      delayMicroseconds(delayTime);
-      digitalWrite(_CLK_pin, LOW);
-      delayMicroseconds(delayTime);
- 
-  }
+  //Integrate pixels for a while
+  _pulse_clock(_integ_clock_cycles);
   
   //Set _ST_pin to low
   digitalWrite(_ST_pin, LOW);
-
+ 
   //Sample for a period of time
-  for(int i = 0; i < 85; i++){
-
-      digitalWrite(_CLK_pin, HIGH);
-      delayMicroseconds(delayTime);
-      digitalWrite(_CLK_pin, LOW);
-      delayMicroseconds(delayTime); 
-      
-  }
-
-  //One more clock pulse before the actual read
-  digitalWrite(_CLK_pin, HIGH);
-  delayMicroseconds(delayTime);
-  digitalWrite(_CLK_pin, LOW);
-  delayMicroseconds(delayTime);
+  //integration stops at pulse 
+  //pixel output is ready after last pulse
+  _pulse_clock(88);
 
   //Read from SPEC_VIDEO
   for(int i = 0; i < C128880_NUM_CHANNELS; i++){
-
-      buffer[i] = _adc->analogRead(_VIDEO_pin);
-      
-      digitalWrite(_CLK_pin, HIGH);
-      delayMicroseconds(delayTime);
-      digitalWrite(_CLK_pin, LOW);
-      delayMicroseconds(delayTime);
-        
+    buffer[i] = _adc->analogRead(_VIDEO_pin);
+    _pulse_clock(1);
   }
-
-  //Set _ST_pin to high
-  digitalWrite(_ST_pin, HIGH);
-
-  //Sample for a small amount of time
-  for(int i = 0; i < 7; i++){
-    
-      digitalWrite(_CLK_pin, HIGH);
-      delayMicroseconds(delayTime);
-      digitalWrite(_CLK_pin, LOW);
-      delayMicroseconds(delayTime);
-    
-  }
-
-  digitalWrite(_CLK_pin, HIGH);
-  delayMicroseconds(delayTime);
 }

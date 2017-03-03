@@ -15,7 +15,8 @@ SerialCommand sCmd(Serial);// the SerialCommand parser object
 void setup(){
   Serial.begin(115200); // Baud Rate set to 115200
   // Setup callbacks for SerialCommand commands
-  sCmd.addCommand("SPEC.READ?", SPEC_READ_sCmd_query_handler); //reads out the whole spectrum
+  sCmd.addCommand("SPEC.INTEG", SPEC_INTEG_sCmd_config_handler); //configures integration time
+  sCmd.addCommand("SPEC.READ?", SPEC_READ_sCmd_query_handler);   //reads out the whole spectrum
   spec.begin();
 }
 
@@ -25,6 +26,18 @@ void loop(){
     sCmd.processCommand();  // process the command
   }
   delay(10);
+}
+
+void SPEC_INTEG_sCmd_config_handler(SerialCommand this_sCmd){
+  char *arg = this_sCmd.next();
+  float integ_time;
+  if (arg == NULL){
+    this_sCmd.print(F("### Error: SPEC.INTEG requires 1 argument 'time' (s)\n"));
+  }
+  else{
+    integ_time = atof(arg);
+    spec.set_integration_time(integ_time);
+  }
 }
 
 void SPEC_READ_sCmd_query_handler(SerialCommand this_sCmd){
