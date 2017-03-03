@@ -49,8 +49,8 @@ void C128880_Class::set_integration_time(float seconds) {
   _integ_clock_cycles = max(_integ_clock_cycles,0);
 }
 
-void C128880_Class::_pulse_clock(int times){
-  for(int i = 0; i < times; i++){
+void C128880_Class::_pulse_clock(int cycles){
+  for(int i = 0; i < cycles; i++){
     digitalWrite(_CLK_pin, HIGH);
     delayMicroseconds(_clock_delay_micros);
     digitalWrite(_CLK_pin, LOW);
