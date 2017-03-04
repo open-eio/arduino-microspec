@@ -10,6 +10,49 @@
 #include <ADC.h> /* https://github.com/pedvide/ADC */
 #include "c12880.h"
  
+#define CLOCK_FREQUENCY 50000
+
+////////////////////////////////////////////////////////////////////////////////
+// High performance helper functions
+
+//this function produces a delay for *half* clock period (100ns), approaching 5MHz
+static inline void _ultrashort_delay_100ns(){
+  #if F_CPU <= 10000000
+  //1 nops
+  asm volatile("nop \n\t");
+  #elif F_CPU <= 20000000
+  //2 nops
+  asm volatile("nop \n\tnop \n\t");
+  #elif F_CPU <= 30000000
+  //3 nops
+  asm volatile("nop \n\tnop \n\tnop \n\t");
+  #elif F_CPU <= 40000000
+  //4 nops
+  asm volatile("nop \n\tnop \n\tnop \n\tnop \n\t");
+  #elif F_CPU <= 50000000
+  //5 nops
+  asm volatile("nop \n\tnop \n\tnop \n\tnop \n\tnop \n\t");
+  #elif F_CPU <= 60000000
+  //6 nops
+  asm volatile("nop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\t");
+  #elif F_CPU <= 70000000
+  //7 nops
+  asm volatile("nop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\t");
+  #elif F_CPU <= 80000000
+  //8 nops
+  asm volatile("nop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\t");
+  #elif F_CPU <= 90000000
+  //9 nops
+  asm volatile("nop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\t");
+  #elif F_CPU <= 100000000
+  //10 nops
+  asm volatile("nop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\t");
+  #endif
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 C128880_Class::C128880_Class(const int TRG_pin,
                              const int ST_pin,
                              const int CLK_pin,
@@ -21,7 +64,42 @@ C128880_Class::C128880_Class(const int TRG_pin,
   _VIDEO_pin = VIDEO_pin;
   _adc = new ADC();        // adc object
   _clock_delay_micros = 1; // half of a clock period
-  set_integration_time(0.001);  // integration time default to 1ms
+  _min_integ_micros = 0;   // this is correction which is platform dependent and 
+                           // should be measured in `begin`
+  set_integration_time(0.010);  // integration time default to 1ms
+}
+
+inline void C128880_Class::_pulse_clock(int cycles){
+  for(int i = 0; i < cycles; i++){
+    #if defined(CORE_TEENSY)
+    digitalWriteFast(_CLK_pin, HIGH);
+    _ultrashort_delay_100ns();
+    digitalWriteFast(_CLK_pin, LOW);
+    _ultrashort_delay_100ns();
+    #else
+    digitalWrite(_CLK_pin, HIGH);
+    _ultrashort_delay_100ns();
+    digitalWrite(_CLK_pin, LOW);
+    _ultrashort_delay_100ns();
+    #endif
+  }
+}
+
+inline void C128880_Class::_pulse_clock_timed(int duration_micros){
+  elapsedMicros sinceStart_micros = 0;
+  while (sinceStart_micros < duration_micros){
+    #if defined(CORE_TEENSY)
+    digitalWriteFast(_CLK_pin, HIGH);
+    _ultrashort_delay_100ns();
+    digitalWriteFast(_CLK_pin, LOW);
+    _ultrashort_delay_100ns();
+    #else
+    digitalWrite(_CLK_pin, HIGH);
+    _ultrashort_delay_100ns();
+    digitalWrite(_CLK_pin, LOW);
+    _ultrashort_delay_100ns();
+    #endif
+  }
 }
 
 void C128880_Class::begin() {
@@ -31,9 +109,9 @@ void C128880_Class::begin() {
   _adc->setResolution(16); // set bits of resolution
   // it can be VERY_LOW_SPEED, LOW_SPEED, MED_SPEED, HIGH_SPEED_16BITS, HIGH_SPEED or VERY_HIGH_SPEED
   // see the documentation for more information
-  _adc->setConversionSpeed(ADC_CONVERSION_SPEED::HIGH_SPEED_16BITS); // change the conversion speed
+  _adc->setConversionSpeed(ADC_CONVERSION_SPEED::VERY_HIGH_SPEED);//HIGH_SPEED_16BITS); // change the conversion speed
   // it can be VERY_LOW_SPEED, LOW_SPEED, MED_SPEED, HIGH_SPEED or VERY_HIGH_SPEED
-  _adc->setSamplingSpeed(ADC_SAMPLING_SPEED::HIGH_SPEED); // change the sampling speed
+  _adc->setSamplingSpeed(ADC_SAMPLING_SPEED::VERY_HIGH_SPEED);//HIGH_SPEED); // change the sampling speed
 
   //Set desired pins to OUTPUT
   pinMode(_CLK_pin, OUTPUT);
@@ -41,46 +119,53 @@ void C128880_Class::begin() {
   
   digitalWrite(_CLK_pin, LOW); // Start with CLK High
   digitalWrite(_ST_pin, LOW);  // Start with ST Low
+  
+  _measure_min_integ_micros();
+}
+
+void C128880_Class::_measure_min_integ_micros() {
+  //48 clock cycles are required after ST goes low
+  elapsedMicros sinceStart_micros = 0;
+  _pulse_clock(48);
+  _min_integ_micros = sinceStart_micros;
 }
 
 void C128880_Class::set_integration_time(float seconds) {
-  _integ_time = max(seconds, 48*2*1e-6);
-  _integ_clock_cycles = (int)(1000000*_clock_delay_micros/2)*_integ_time - 48;
-  _integ_clock_cycles = max(_integ_clock_cycles,0);
+  _integ_time = max(seconds, 0);
 }
 
-void C128880_Class::_pulse_clock(int cycles){
-  for(int i = 0; i < cycles; i++){
-    digitalWrite(_CLK_pin, HIGH);
-    delayMicroseconds(_clock_delay_micros);
-    digitalWrite(_CLK_pin, LOW);
-    delayMicroseconds(_clock_delay_micros);
-  }
-}
 
 void C128880_Class::read_into(uint16_t *buffer) {
+  //compute integration time
+  int duration_micros = (int) (_integ_time*1e6);
+  duration_micros -= _min_integ_micros; //correction based on 48 pulses after ST goes low
+  duration_micros = max(duration_micros,0);
   // Start clock cycle and set start pulse to signal start
   digitalWrite(_CLK_pin, HIGH);
-  delayMicroseconds(_clock_delay_micros);
+  _ultrashort_delay_100ns();
   digitalWrite(_CLK_pin, LOW);
   digitalWrite(_ST_pin, HIGH);
-  delayMicroseconds(_clock_delay_micros);
-  _pulse_clock(3); //pixel integration starts after three clock pulses
-  
+  _ultrashort_delay_100ns();
+  //pixel integration starts after three clock pulses
+  _pulse_clock(3);
+   _timings[0] = micros();
   //Integrate pixels for a while
-  _pulse_clock(_integ_clock_cycles);
-  
+  //_pulse_clock(_integ_clock_cycles);
+  _pulse_clock_timed(duration_micros);
   //Set _ST_pin to low
   digitalWrite(_ST_pin, LOW);
- 
+  _timings[1] = micros();
   //Sample for a period of time
-  //integration stops at pulse 
-  //pixel output is ready after last pulse
-  _pulse_clock(88);
-
+  //integration stops at pulse 48 th pulse after ST went low
+  _pulse_clock(48);
+  _timings[2] = micros();
+  //pixel output is ready after last pulse #88 after ST wen low
+  _pulse_clock(40);
+  _timings[3] = micros();
   //Read from SPEC_VIDEO
   for(int i = 0; i < C128880_NUM_CHANNELS; i++){
     buffer[i] = _adc->analogRead(_VIDEO_pin);
     _pulse_clock(1);
   }
+  _timings[4] = micros();
 }

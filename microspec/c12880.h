@@ -25,9 +25,14 @@ public:
   void set_integration_time(float seconds);
   //Functionality methods
   void read_into(uint16_t *buffer);
+  int get_timing(int index){
+    return _timings[index];
+  }
 private:
   //helper methods
-  void _pulse_clock(int times);
+  inline void _pulse_clock(int cycles);
+  inline void _pulse_clock_timed(int duration_micros);
+  void _measure_min_integ_micros();
   //Attributes
   int _TRG_pin;
   int _ST_pin;
@@ -36,7 +41,8 @@ private:
   ADC *_adc; // adc object
   int _clock_delay_micros;
   float _integ_time;
-  int   _integ_clock_cycles;
+  int _min_integ_micros;
+  int _timings[10];
 };
 
 

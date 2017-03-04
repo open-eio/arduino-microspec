@@ -4,7 +4,7 @@
 
 #define SPEC_TRG         A0
 #define SPEC_ST          A1
-#define SPEC_CLK         A2
+#define SPEC_CLK         10
 #define SPEC_VIDEO       A3
 
 uint16_t data[C128880_NUM_CHANNELS];
@@ -17,6 +17,7 @@ void setup(){
   // Setup callbacks for SerialCommand commands
   sCmd.addCommand("SPEC.INTEG", SPEC_INTEG_sCmd_config_handler); //configures integration time
   sCmd.addCommand("SPEC.READ?", SPEC_READ_sCmd_query_handler);   //reads out the whole spectrum
+  sCmd.addCommand("SPEC.TIMING?", SPEC_TIMING_sCmd_query_handler);   //reads out the whole spectrum
   spec.begin();
 }
 
@@ -48,5 +49,14 @@ void SPEC_READ_sCmd_query_handler(SerialCommand this_sCmd){
   }
   //last value gets special formatting
   this_sCmd.print(data[C128880_NUM_CHANNELS - 1]);
+  this_sCmd.print("\n");
+}
+
+void SPEC_TIMING_sCmd_query_handler(SerialCommand this_sCmd){
+  for(int i=0; i < 9; i++){
+    this_sCmd.print(spec.get_timing(i));
+    this_sCmd.print(",");
+  }
+  this_sCmd.print(spec.get_timing(9));
   this_sCmd.print("\n");
 }
