@@ -1,5 +1,11 @@
 #include <SerialCommand.h>   /* http://github.com/p-v-o-s/Arduino-SerialCommand */
+
+#if defined(CORE_TEENSY)
 #include <ADC.h> /* https://github.com/pedvide/ADC */
+#else
+#include <elapsedMillis.h>
+#endif
+
 #include "c12880.h"
 
 #define SPEC_TRG         A0

@@ -7,7 +7,13 @@
   https://github.com/groupgets/c12880ma/blob/master/arduino_c12880ma_example/arduino_c12880ma_example.ino
  */
 #include <Arduino.h>
+
+#if defined(CORE_TEENSY)
 #include <ADC.h> /* https://github.com/pedvide/ADC */
+#else
+#include <elapsedMillis.h>
+#endif
+
 #include "c12880.h"
  
 #define CLOCK_FREQUENCY 50000
@@ -48,7 +54,6 @@ static inline void _ultrashort_delay_100ns(){
   //10 nops
   asm volatile("nop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\t");
   #endif
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -62,7 +67,9 @@ C128880_Class::C128880_Class(const int TRG_pin,
   _ST_pin  = ST_pin;
   _CLK_pin = CLK_pin;
   _VIDEO_pin = VIDEO_pin;
+  #if defined(CORE_TEENSY)
   _adc = new ADC();        // adc object
+  #endif
   _clock_delay_micros = 1; // half of a clock period
   _min_integ_micros = 0;   // this is correction which is platform dependent and 
                            // should be measured in `begin`
@@ -103,6 +110,7 @@ inline void C128880_Class::_pulse_clock_timed(int duration_micros){
 }
 
 void C128880_Class::begin() {
+  #if defined(CORE_TEENSY)
   ///// ADC0 ////--------------------------------------------------------------
   //adc->setReference(ADC_REF_INTERNAL, ADC_0); For Teensy 3.x ADC_REF_INTERNAL is 1.2V, default is 3.3V
   _adc->setAveraging(1); // set number of averages
@@ -112,7 +120,10 @@ void C128880_Class::begin() {
   _adc->setConversionSpeed(ADC_CONVERSION_SPEED::VERY_HIGH_SPEED);//HIGH_SPEED_16BITS); // change the conversion speed
   // it can be VERY_LOW_SPEED, LOW_SPEED, MED_SPEED, HIGH_SPEED or VERY_HIGH_SPEED
   _adc->setSamplingSpeed(ADC_SAMPLING_SPEED::VERY_HIGH_SPEED);//HIGH_SPEED); // change the sampling speed
-
+  #else
+  //DUE and ZERO (SAMD21) have 12-bit capability
+  analogReadResolution(12);
+  #endif
   //Set desired pins to OUTPUT
   pinMode(_CLK_pin, OUTPUT);
   pinMode(_ST_pin, OUTPUT);
@@ -164,7 +175,11 @@ void C128880_Class::read_into(uint16_t *buffer) {
   _timings[3] = micros();
   //Read from SPEC_VIDEO
   for(int i = 0; i < C128880_NUM_CHANNELS; i++){
+    #if defined(CORE_TEENSY)
     buffer[i] = _adc->analogRead(_VIDEO_pin);
+    #else
+    buffer[i] = analogRead(_VIDEO_pin);
+    #endif
     _pulse_clock(1);
   }
   _timings[4] = micros();
