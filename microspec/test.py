@@ -5,7 +5,7 @@ class MicroSpec(object):
     def __init__(self, port):
         self._ser = serial.Serial(port,baudrate=115200)
     def set_integration_time(self, seconds):
-        self._ser.write(b"SPEC.INTEG %0.6f\n" % seconds)
+        self._ser.write(bytes("SPEC.INTEG %0.6f\n" % seconds,'utf8'))
     def read(self):
         self._ser.write(b"SPEC.READ?\n")
         sdata = self._ser.readline()
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     port = glob.glob("/dev/ttyACM*")[0]
     
     spec = MicroSpec(port)
-    icc = spec.set_integration_time(0.000025)
+    icc = spec.set_integration_time(0.0001)
     
     sdata, tdata = spec.read()
     print("Timings: %r" % (tdata - tdata[0],))
