@@ -12,7 +12,7 @@
 uint16_t data[SPEC_CHANNELS];
 
 void setup(){
-
+  analogReadResolution(12);
   //Set desired pins to OUTPUT
   pinMode(SPEC_CLK, OUTPUT);
   pinMode(SPEC_ST, OUTPUT);

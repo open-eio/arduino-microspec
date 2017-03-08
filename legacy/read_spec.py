@@ -16,7 +16,7 @@ fig.canvas.draw()
 l1, = ax1.plot(arange(288),[0]*288)
 
 ax1.set_xlim(0,288)
-ax1.set_ylim(0,1024)
+ax1.set_ylim(0,2**12)
 plt.show()
 
 
