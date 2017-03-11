@@ -5,7 +5,8 @@ class MicroSpec(object):
     def __init__(self, port):
         self._ser = serial.Serial(port,baudrate=115200)
     def set_integration_time(self, seconds):
-        self._ser.write(bytes("SPEC.INTEG %0.6f\n" % seconds,'utf8'))
+        cmd = "SPEC.INTEG %0.6f\n" % seconds
+        self._ser.write(cmd.encode('utf8'))
     def read(self):
         self._ser.write(b"SPEC.READ?\n")
         sdata = self._ser.readline()
@@ -16,13 +17,13 @@ class MicroSpec(object):
         return (sdata, tdata)
 
 if __name__ == "__main__":
-    DATASET_NAME = "CFL_16bit_integ100us"
+    DATASET_NAME = "Xenon-20-watt_no-filt_3inch-water_integ50us"
     mpl.rcParams["savefig.directory"] = os.path.dirname(__file__)
 
     port = glob.glob("/dev/ttyACM*")[0]
     
     spec = MicroSpec(port)
-    icc = spec.set_integration_time(0.0001)
+    icc = spec.set_integration_time(100e-3)
     
     sdata, tdata = spec.read()
     print("Timings: %r" % (tdata - tdata[0],))
