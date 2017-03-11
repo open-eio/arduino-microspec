@@ -23,6 +23,7 @@
 
 //this function produces a delay for *half* clock period (100ns), approaching 5MHz
 static inline void _ultrashort_delay_100ns(){
+#if defined(CORE_TEENSY)
   #if F_CPU <= 10000000
   //1 nops
   asm volatile("nop \n\t");
@@ -54,6 +55,9 @@ static inline void _ultrashort_delay_100ns(){
   //10 nops
   asm volatile("nop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\t");
   #endif
+#else
+  delayMicroseconds(1);
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////
