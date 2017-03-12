@@ -47,7 +47,7 @@ private:
   int _clock_delay_micros;
   float _integ_time;
   int _min_integ_micros;
-  int _timings[10];
+  unsigned int _timings[10];
 };
 
 
