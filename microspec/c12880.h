@@ -28,7 +28,7 @@ public:
   void set_integration_time(float seconds);
   //Functionality methods
   void read_into(uint16_t *buffer);
-  int get_timing(int index){
+  unsigned int get_timing(int index){
     return _timings[index];
   }
 private:
