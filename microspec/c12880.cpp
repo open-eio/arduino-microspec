@@ -10,6 +10,7 @@
 
 #if defined(CORE_TEENSY)
 #include <ADC.h> /* https://github.com/pedvide/ADC */
+#define LED_BUILTIN 13
 #else
 #include <elapsedMillis.h>
 #endif
@@ -18,10 +19,12 @@
  
 #define CLOCK_FREQUENCY 50000
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // High performance helper functions
 
 //this function produces a delay for *half* clock period (100ns), approaching 5MHz
+//for Teensyduino works up to 180MHz clock such as in the Teensy 3.6
 static inline void _ultrashort_delay_100ns(){
 #if defined(CORE_TEENSY)
   #if F_CPU <= 10000000
@@ -54,8 +57,33 @@ static inline void _ultrashort_delay_100ns(){
   #elif F_CPU <= 100000000
   //10 nops
   asm volatile("nop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\t");
+  #elif F_CPU <= 110000000
+  //11 nops
+  asm volatile("nop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\t");
+  #elif F_CPU <= 120000000
+  //12 nops
+  asm volatile("nop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\t");
+  #elif F_CPU <= 130000000
+  //13 nops
+  asm volatile("nop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\t");
+  #elif F_CPU <= 140000000
+  //14 nops
+  asm volatile("nop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\t");
+  #elif F_CPU <= 150000000
+  //15 nops
+  asm volatile("nop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\t");
+  #elif F_CPU <= 160000000
+  //16 nops
+  asm volatile("nop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\t");
+  #elif F_CPU <= 170000000
+  //17 nops
+  asm volatile("nop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\t");
+  #elif F_CPU <= 180000000
+  //18 nops
+  asm volatile("nop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\tnop \n\t");
   #endif
 #else
+  //default to something that should always work in Arduino
   delayMicroseconds(1);
 #endif
 }
@@ -118,7 +146,7 @@ void C128880_Class::begin() {
   ///// ADC0 ////--------------------------------------------------------------
   //adc->setReference(ADC_REF_INTERNAL, ADC_0); For Teensy 3.x ADC_REF_INTERNAL is 1.2V, default is 3.3V
   _adc->setAveraging(1); // set number of averages
-  _adc->setResolution(16); // set bits of resolution
+  _adc->setResolution(12); // set bits of resolution
   // it can be VERY_LOW_SPEED, LOW_SPEED, MED_SPEED, HIGH_SPEED_16BITS, HIGH_SPEED or VERY_HIGH_SPEED
   // see the documentation for more information
   _adc->setConversionSpeed(ADC_CONVERSION_SPEED::VERY_HIGH_SPEED);//HIGH_SPEED_16BITS); // change the conversion speed
@@ -178,13 +206,22 @@ void C128880_Class::read_into(uint16_t *buffer) {
   _pulse_clock(40);
   _timings[3] = micros();
   //Read from SPEC_VIDEO
+
+#if defined(CORE_TEENSY)
+  //use non-blocking methods to stagger conversion with next pixel clock-out
+  _adc->startContinuous(_VIDEO_pin, ADC_0); //non-blocking start single-shot mode
   for(int i = 0; i < C128880_NUM_CHANNELS; i++){
-    #if defined(CORE_TEENSY)
-    buffer[i] = _adc->analogRead(_VIDEO_pin);
-    #else
+    _pulse_clock(1);                          //continue to clock in the next sample while the conversion completes
+    while(!_adc->isComplete()){}; //poll for completion
+    buffer[i] = (uint16_t) _adc->analogReadContinuous();
+  }
+  _adc->stopContinuous();
+#else
+  for(int i = 0; i < C128880_NUM_CHANNELS; i++){
     buffer[i] = analogRead(_VIDEO_pin);
-    #endif
     _pulse_clock(1);
   }
+#endif
   _timings[4] = micros();
 }
+
