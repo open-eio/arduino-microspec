@@ -18,8 +18,8 @@
 IntervalTimer flashTimer;
 #endif
 
-uint16_t data[C128880_NUM_CHANNELS];
-C128880_Class spec(SPEC_TRG,SPEC_ST,SPEC_CLK,SPEC_VIDEO);
+uint16_t data[C12880_NUM_CHANNELS];
+C12880_Class spec(SPEC_TRG,SPEC_ST,SPEC_CLK,SPEC_VIDEO);
 
 SerialCommand sCmd(Serial);// the SerialCommand parser object
 /******************************************************************************/
@@ -75,12 +75,12 @@ void SPEC_INTEG_sCmd_config_handler(SerialCommand this_sCmd){
 
 void SPEC_READ_sCmd_query_handler(SerialCommand this_sCmd){
   spec.read_into(data);
-  for (int i = 0; i < C128880_NUM_CHANNELS - 1; i++){
+  for (int i = 0; i < C12880_NUM_CHANNELS - 1; i++){
     this_sCmd.print(data[i]);
     this_sCmd.print(',');
   }
   //last value gets special formatting
-  this_sCmd.print(data[C128880_NUM_CHANNELS - 1]);
+  this_sCmd.print(data[C12880_NUM_CHANNELS - 1]);
   this_sCmd.print("\n");
 }
 

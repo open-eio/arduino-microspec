@@ -1,5 +1,5 @@
 /*
-  c12880.h - Library for interacting with the Hamamatsu C12880 microspectrometer
+  c12880.h - Library for interacting with the Hamamatsu C128880 microspectrometer
   Created by Craig Wm. Versek, 2017-03-01
  */
 #ifndef _C12880_H_INCLUDED
@@ -11,14 +11,14 @@
 #include <ADC.h> /* https://github.com/pedvide/ADC */
 #endif
 
-#define C12880_NUM_CHANNELS 288
+#define C128880_NUM_CHANNELS 288
 /*******************************************************************************
-  C12880_Class
+  C128880_Class
   
 *******************************************************************************/
-class C12880_Class{
+class C128880_Class{
 public:
-  C12880_Class(const int TRG_pin,
+  C128880_Class(const int TRG_pin,
                 const int ST_pin,
                 const int CLK_pin,
                 const int VIDEO_pin

@@ -1,5 +1,5 @@
 /*
-  c12880.cpp - Library for interacting with the Hamamatsu C12880
+  c12880.cpp - Library for interacting with the Hamamatsu C128880
                           microspectrometer
   Created by Craig Wm. Versek, 2017-03-01
   
@@ -90,7 +90,7 @@ static inline void _ultrashort_delay_100ns(){
 
 ////////////////////////////////////////////////////////////////////////////////
 
-C12880_Class::C12880_Class(const int TRG_pin,
+C128880_Class::C128880_Class(const int TRG_pin,
                              const int ST_pin,
                              const int CLK_pin,
                              const int VIDEO_pin
@@ -108,7 +108,7 @@ C12880_Class::C12880_Class(const int TRG_pin,
   set_integration_time(0.010);  // integration time default to 1ms
 }
 
-inline void C12880_Class::_pulse_clock(int cycles){
+inline void C128880_Class::_pulse_clock(int cycles){
   for(int i = 0; i < cycles; i++){
     #if defined(CORE_TEENSY)
     digitalWriteFast(_CLK_pin, HIGH);
@@ -124,7 +124,7 @@ inline void C12880_Class::_pulse_clock(int cycles){
   }
 }
 
-inline void C12880_Class::_pulse_clock_timed(int duration_micros){
+inline void C128880_Class::_pulse_clock_timed(int duration_micros){
   elapsedMicros sinceStart_micros = 0;
   while (sinceStart_micros < duration_micros){
     #if defined(CORE_TEENSY)
@@ -141,7 +141,7 @@ inline void C12880_Class::_pulse_clock_timed(int duration_micros){
   }
 }
 
-void C12880_Class::begin() {
+void C128880_Class::begin() {
   #if defined(CORE_TEENSY)
   ///// ADC0 ////--------------------------------------------------------------
   //adc->setReference(ADC_REF_INTERNAL, ADC_0); For Teensy 3.x ADC_REF_INTERNAL is 1.2V, default is 3.3V
@@ -166,19 +166,19 @@ void C12880_Class::begin() {
   _measure_min_integ_micros();
 }
 
-void C12880_Class::_measure_min_integ_micros() {
+void C128880_Class::_measure_min_integ_micros() {
   //48 clock cycles are required after ST goes low
   elapsedMicros sinceStart_micros = 0;
   _pulse_clock(48);
   _min_integ_micros = sinceStart_micros;
 }
 
-void C12880_Class::set_integration_time(float seconds) {
+void C128880_Class::set_integration_time(float seconds) {
   _integ_time = max(seconds, 0);
 }
 
 
-void C12880_Class::read_into(uint16_t *buffer) {
+void C128880_Class::read_into(uint16_t *buffer) {
   //compute integration time
   int duration_micros = (int) (_integ_time*1e6);
   duration_micros -= _min_integ_micros; //correction based on 48 pulses after ST goes low
@@ -210,14 +210,14 @@ void C12880_Class::read_into(uint16_t *buffer) {
 #if defined(CORE_TEENSY)
   //use non-blocking methods to stagger conversion with next pixel clock-out
   _adc->startContinuous(_VIDEO_pin, ADC_0); //non-blocking start single-shot mode
-  for(int i = 0; i < C12880_NUM_CHANNELS; i++){
+  for(int i = 0; i < C128880_NUM_CHANNELS; i++){
     _pulse_clock(1);                          //continue to clock in the next sample while the conversion completes
     while(!_adc->isComplete()){}; //poll for completion
     buffer[i] = (uint16_t) _adc->analogReadContinuous();
   }
   _adc->stopContinuous();
 #else
-  for(int i = 0; i < C12880_NUM_CHANNELS; i++){
+  for(int i = 0; i < C128880_NUM_CHANNELS; i++){
     buffer[i] = analogRead(_VIDEO_pin);
     _pulse_clock(1);
   }
