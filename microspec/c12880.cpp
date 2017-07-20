@@ -208,6 +208,8 @@ void C12880_Class::read_into(uint16_t *buffer) {
   //Read from SPEC_VIDEO
 
 #if defined(CORE_TEENSY)
+  #if defined(MICROSPEC_ADC_PIPELINE)
+  //WARNING this creates artifacts at clock speeds greater than 96MHz!
   //use non-blocking methods to stagger conversion with next pixel clock-out
   _adc->startContinuous(_VIDEO_pin, ADC_0); //non-blocking start single-shot mode
   for(int i = 0; i < C12880_NUM_CHANNELS; i++){
@@ -216,6 +218,12 @@ void C12880_Class::read_into(uint16_t *buffer) {
     buffer[i] = (uint16_t) _adc->analogReadContinuous();
   }
   _adc->stopContinuous();
+  #else
+   for(int i = 0; i < C12880_NUM_CHANNELS; i++){
+     buffer[i] = _adc->analogRead(_VIDEO_pin);
+     _pulse_clock(1);
+   }
+  #endif
 #else
   for(int i = 0; i < C12880_NUM_CHANNELS; i++){
     buffer[i] = analogRead(_VIDEO_pin);

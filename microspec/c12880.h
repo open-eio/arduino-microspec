@@ -12,6 +12,8 @@
 #endif
 
 #define C12880_NUM_CHANNELS 288
+//uncomment for experimental feature, WARNING creates artifacts above 96MHz system clock
+//#define MICROSPEC_ADC_PIPELINE
 /*******************************************************************************
   C12880_Class
   

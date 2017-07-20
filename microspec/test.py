@@ -17,13 +17,13 @@ class MicroSpec(object):
         return (sdata, tdata)
 
 if __name__ == "__main__":
-    DATASET_NAME = "Xenon-20-watt_no-filt_3inch-water_integ50us"
+    DATASET_NAME = "LED Desk Lamp 1ft IT1e-6s Teensy 3.5 120MHz ADC synchronous"
     mpl.rcParams["savefig.directory"] = os.path.dirname(__file__)
 
     port = glob.glob("/dev/ttyACM*")[0]
     
     spec = MicroSpec(port)
-    icc = spec.set_integration_time(100e-3)
+    icc = spec.set_integration_time(1e-6)
     
     sdata, tdata = spec.read()
     print("Timings: %r" % (tdata - tdata[0],))
